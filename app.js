@@ -5,14 +5,16 @@ const bodyParser = require("body-parser");
 const date = require(__dirname + "/date.js");
 const mongoose = require("mongoose")
 const _ = require("lodash")
+require("dotenv").config()
 
 // SETUP ///
 const app = express();
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
+mongoatalasUrl = "mongodb+srv://kit:"+process.env.ADMIN_KEY+"@cluster0.dc50xli.mongodb.net/todolistDB"
 mongoose.set("strictQuery",false)
-mongoose.connect("mongodb://localhost:27017/todolistDB", {useNewUrlParser: true})
+mongoose.connect(mongoatalasUrl, {useNewUrlParser: true})
 
 // DataBase SETUP ///
 const itemsSchema = {
