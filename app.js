@@ -4,6 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const date = require(__dirname + "/date.js");
 const mongoose = require("mongoose")
+const _ = require("lodash")
 
 // SETUP ///
 const app = express();
@@ -57,7 +58,7 @@ app.get("/", function(req, res) {
 });
 
 app.get("/:customListName", function(req, res){
-  const customListName = req.params.customListName
+  const customListName = _.capitalize(req.params.customListName)
   List.findOne({name: customListName}, function(err, foundList){
     if (!err){
       if(!foundList){
@@ -67,10 +68,9 @@ app.get("/:customListName", function(req, res){
           items: defaultItem
         })
         list.save()
-        console.log("Doesn't exist!")
+        res.redirect("/" + customListName)
       } else {
         //Found list, show existing list
-        console.log("Exist!")
         res.render("list", {listTitle: foundList.name, newListItems: foundList.items})
       }
     }
@@ -78,22 +78,44 @@ app.get("/:customListName", function(req, res){
 })
 
 app.post("/", function(req, res){
-  const itemName = req.body.newItem;
+  const itemName = req.body.newItem
+  const listName = req.body.list
   const item = new Item ({name: itemName})
-  item.save()
-  res.redirect("/")
+
+  if (listName === day) {
+    item.save()
+    res.redirect("/")
+  } else {
+    List.findOne({name: listName}, function(err, foundList){
+      foundList.items.push(item)
+      foundList.save()
+      res.redirect("/" + listName)
+    })
+  }
+
 });
 
 app.post("/delete", function(req, res){
   const checkItemId = req.body.checkbox
-  Item.findByIdAndRemove(checkItemId, function(err){
-    if (err) {
-      console.log(err)
-    } else {
-      console.log("Removed Checked Item!")
-      res.redirect("/")
+  const listName = req.body.listName
+
+  if (listName === day) {
+    Item.findByIdAndRemove(checkItemId, function(err){
+      if (err) {
+        console.log(err)
+      } else {
+        console.log("Removed Checked Item!")
+        res.redirect("/")
+      }
+    })
+  } else {
+   List.findOneAndUpdate({name: listName}, {$pull: {items: {_id: checkItemId}}}, function(err, foundList){
+    if (!err) {
+      res.redirect("/" + listName)
     }
-  })
+   })
+  }
+  
 })
 
 
